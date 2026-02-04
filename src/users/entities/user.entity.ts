@@ -1,8 +1,14 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToMany, JoinTable, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToMany, JoinTable, CreateDateColumn, UpdateDateColumn, OneToOne, JoinColumn } from 'typeorm';
 import { Badge } from './badge.entity';
 import { Event } from '../../events/entities/event.entity';
 import { Organizer } from '../../events/entities/organizer.entity';
 import { Message } from '../../chat/entities/message.entity';
+
+export enum UserRole {
+    ADMIN = 'admin',
+    ORGANIZER = 'organizer',
+    USER = 'user',
+}
 
 @Entity()
 export class User {
@@ -14,6 +20,19 @@ export class User {
 
     @Column()
     password: string;
+
+    @Column({
+        type: 'enum',
+        enum: UserRole,
+        default: UserRole.USER,
+    })
+    role: UserRole;
+
+    @Column({ default: true })
+    isApproved: boolean;
+
+    @Column({ default: false })
+    isBlocked: boolean;
 
     @Column({ nullable: true })
     name: string;
@@ -37,6 +56,9 @@ export class User {
     @ManyToMany(() => Organizer, (organizer) => organizer.followers)
     @JoinTable()
     followed: Organizer[];
+
+    @OneToOne(() => Organizer, (organizer) => organizer.user, { nullable: true })
+    organizerProfile: Organizer;
 
     @OneToMany(() => Message, (message) => message.author)
     messages: Message[];

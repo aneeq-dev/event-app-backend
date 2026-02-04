@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToMany, JoinTable, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToMany, JoinTable, CreateDateColumn, UpdateDateColumn, OneToOne, JoinColumn } from 'typeorm';
 import { Event } from './event.entity';
 import { User } from '../../users/entities/user.entity';
 
@@ -18,6 +18,10 @@ export class Organizer {
 
     @ManyToMany(() => User, (user) => user.followed)
     followers: User[];
+
+    @OneToOne(() => User, (user) => user.organizerProfile)
+    @JoinColumn()
+    user: User;
 
     @CreateDateColumn()
     createdAt: Date;

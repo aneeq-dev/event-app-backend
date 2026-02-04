@@ -18,6 +18,18 @@ export class Event {
     @Column()
     location: string;
 
+    @Column({ nullable: true })
+    bannerImage: string;
+
+    @Column('decimal', { precision: 10, scale: 2, default: 0 })
+    price: number;
+
+    @Column({ nullable: true })
+    capacity: number;
+
+    @Column({ default: false })
+    isTicketed: boolean;
+
     @Column('decimal', { precision: 10, scale: 7, nullable: true })
     latitude: number;
 

@@ -3,14 +3,17 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { User } from '../users/entities/user.entity';
+import { User, UserRole } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
+import { Organizer } from '../events/entities/organizer.entity';
 
 @Injectable()
 export class AuthService {
     constructor(
         @InjectRepository(User)
         private usersRepository: Repository<User>,
+        @InjectRepository(Organizer)
+        private organizerRepository: Repository<Organizer>,
         private jwtService: JwtService,
         private usersService: UsersService,
     ) { }
@@ -20,6 +23,7 @@ export class AuthService {
         password: string;
         name: string;
         phone?: string;
+        role?: UserRole;
     }): Promise<{ user: User; accessToken: string }> {
         // Check if user already exists
         const existingUser = await this.usersRepository.findOne({
@@ -34,10 +38,25 @@ export class AuthService {
         const hashedPassword = await bcrypt.hash(userData.password, 10);
 
         // Create user using UsersService (handles email verification)
+        // If role is ORGANIZER, set isApproved to false
+        const role = userData.role || UserRole.USER;
+        const isApproved = role !== UserRole.ORGANIZER;
+
         const savedUser = await this.usersService.create({
             ...userData,
             password: hashedPassword,
+            role,
+            isApproved,
         });
+
+        if (role === UserRole.ORGANIZER) {
+            const organizer = this.organizerRepository.create({
+                name: userData.name,
+                email: userData.email,
+                user: savedUser,
+            });
+            await this.organizerRepository.save(organizer);
+        }
 
         // Generate JWT token
         const accessToken = this.generateToken(savedUser);
@@ -82,7 +101,7 @@ export class AuthService {
     async validateUser(userId: string): Promise<User> {
         const user = await this.usersRepository.findOne({
             where: { id: userId },
-            relations: ['badges', 'followed'],
+            relations: ['badges', 'followed', 'organizerProfile'],
         });
 
         if (!user) {
