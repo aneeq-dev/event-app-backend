@@ -1,14 +1,34 @@
-import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, UseGuards, Request, ForbiddenException } from '@nestjs/common';
 import { EventsService } from './events.service';
 import { Event } from './entities/event.entity';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { UserRole } from '../users/entities/user.entity';
 
 @Controller('events')
 export class EventsController {
     constructor(private readonly eventsService: EventsService) { }
 
     @Post()
-    create(@Body() data: Partial<Event>) {
-        return this.eventsService.create(data);
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.ORGANIZER)
+    create(@Body() data: Partial<Event>, @Request() req) {
+        const user = req.user;
+        if (!user.isApproved) {
+            throw new ForbiddenException('Organizer account not approved yet');
+        }
+        if (!user.organizerProfile) {
+            throw new ForbiddenException('Organizer profile not found');
+        }
+
+        // Associate event with organizer
+        const eventData = {
+            ...data,
+            organizer: user.organizerProfile,
+        };
+
+        return this.eventsService.create(eventData);
     }
 
     @Get()

@@ -15,6 +15,7 @@ import { Waitlist, Poll, Voucher } from './events/entities/extra.entities';
 import { Message } from './chat/entities/message.entity';
 import { LiveModule } from './live/live.module';
 import { EmailModule } from './email/email.module';
+import { UploadsModule } from './uploads/uploads.module';
 
 @Module({
   imports: [
@@ -26,7 +27,7 @@ import { EmailModule } from './email/email.module';
       username: process.env.DB_USERNAME || 'eventapp',
       password: process.env.DB_PASSWORD || 'eventapp',
       database: process.env.DB_NAME || 'eventapp',
-      schema: "public", // Ensure this is specified
+      schema: "public",
       entities: [User, Badge, Event, Organizer, Waitlist, Poll, Voucher, Message],
       synchronize: true,
     }),
@@ -36,6 +37,7 @@ import { EmailModule } from './email/email.module';
     ChatModule,
     LiveModule,
     EmailModule,
+    UploadsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
